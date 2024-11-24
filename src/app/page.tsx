@@ -1,28 +1,17 @@
+// components/Home.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-
-interface Link {
-  type?: string;
-  label?: string;
-  url: string;
-}
-
-interface Token {
-  url: string;
-  icon: string;
-  chainId: string;
-  tokenAddress: string;
-  description?: string;
-  links?: Link[];
-}
+import { filterWebsite } from "./filters/filter-website"; 
+import { Token } from "./filters/type";
 
 export default function Home() {
   const [data, setData] = useState<Token[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1); // Track the current page
-  const itemsPerPage = 15; // Limit to 15 items per page
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,7 +22,8 @@ export default function Home() {
         }
 
         const result: Token[] = await response.json();
-        setData(result);
+        const filteredResult = filterWebsite(result);
+        setData(filteredResult);
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
@@ -58,74 +48,76 @@ export default function Home() {
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
   return (
-    <div>
-      <h1>Latest Token Profiles</h1>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          border: "1px solid black",
-        }}
-      >
-        <thead>
-          <tr>
-            <th>Icon</th>
-            <th>Url</th>
-            <th>Address</th>
-            <th>Chain ID</th>
-            <th>Description</th>
-            <th>Links</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentData.map((token, index) => (
-            <tr key={index}>
-              <td>
-                <Image
-                  src={token.icon}
-                  alt={`${token.tokenAddress} icon`}
-                  width={144}
-                  height={144}
-                  priority={index < 10}
-                />
-              </td>
-              <td>{token.url}</td>
-              <td>{token.tokenAddress}</td>
-              <td>{token.chainId}</td>
-              <td>{token.description || "N/A"}</td>
-              <td>
-                {token.links && token.links.length > 0 ? (
-                  <ul style={{ listStyleType: "none", padding: 0 }}>
-                    {token.links.map((link, idx) => (
-                      <li key={idx}>
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {link.label || link.type || "Link"}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  "No Links"
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="flex flex-col items-center">
+      <h1 className="text-2xl font-bold mb-4">Latest Token Profiles</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+        {currentData.map((token, index) => (
+          <div
+            key={index}
+            className="flex flex-col items-start bg-white dark:bg-gray-800 shadow-md rounded-lg p-4"
+          >
+            {/* Icon */}
+            <div className="mb-4">
+              <Image
+                src={token.icon}
+                alt={`${token.tokenAddress} icon`}
+                width={64}
+                height={64}
+                className="rounded-full"
+              />
+            </div>
+
+            {/* Details */}
+            <div>
+              <p className="text-sm text-gray-500">Address:</p>
+              <p className="text-gray-800 dark:text-gray-200 mb-2">
+                {token.tokenAddress}
+              </p>
+
+              <p className="text-sm text-gray-500">Chain ID:</p>
+              <p className="text-gray-800 dark:text-gray-200 mb-2">
+                {token.chainId}
+              </p>
+
+              <p className="text-sm text-gray-500">Description:</p>
+              <p className=" text-gray-800 dark:text-gray-200 mb-2">
+                {token.description || "N/A"}
+              </p>
+
+              <p className="text-sm text-gray-500">Links:</p>
+              {token.links && token.links.length > 0 ? (
+                <ul className="flex flex-col-1 gap-5 list-disc ml-5 text-blue-500 dark:text-blue-400">
+                  {token.links.map((link, idx) => (
+                    <li key={idx}>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {link.label || link.type || "Link"}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500">No Links</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Pagination Controls */}
-      <div style={{ marginTop: "20px" }}>
+      <div className="flex justify-center items-center mt-6 space-x-4">
         <button
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
         >
           Previous
         </button>
-        <span style={{ margin: "0 10px" }}>
+        <span className="text-gray-700 dark:text-gray-300">
           Page {currentPage} of {totalPages}
         </span>
         <button
@@ -133,6 +125,7 @@ export default function Home() {
             setCurrentPage((prev) => Math.min(prev + 1, totalPages))
           }
           disabled={currentPage === totalPages}
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
         >
           Next
         </button>
